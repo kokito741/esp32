@@ -122,7 +122,7 @@ void loop() {
 
 
     Serial.println("path build start");
-    currentdata_path = "cUgRiGk3v1Yfi59j0eOlNrK7gnn1/Living Room/"+currentDate+"/"+DEVICE_ID;
+    currentdata_path = path+currentDate+"/"+DEVICE_ID;
     //currentdata_path = "cUgRiGk3v1Yfi59j0eOlNrK7gnn1/Living Room/24-12-2023 - 21:57:32/esp32-dev-1";
     Serial.println(currentdata_path);
 
