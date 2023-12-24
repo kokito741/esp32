@@ -116,16 +116,20 @@ void loop() {
     float temperature= dht.readTemperature();
     float humidity=dht.readHumidity();
     Serial.println("Sensors recorded");
-
+    Serial.println("Delay started");
     delay(4000);
-
+    Serial.println("Delay finished");
+    Serial.println("path build start");
     currentdata_path = path+getCurrentDate()+"/"+DEVICE_ID;
     temp_path=currentdata_path+"/temperature";
     hum_path=currentdata_path+"/humidity";
-
+    Serial.println("path build finished");
+    Serial.println("Json set start");
     Tempreature_json.set("Value",temperature);
     Humidity_json.set("Value",humidity);
-    Serial.println("Json set");
+    Serial.println("Json set finished");
+    Serial.println("Updating firebase");
+
     Firebase.updateNode(fbdo, temp_path , Tempreature_json);
     Firebase.updateNode(fbdo, hum_path , Humidity_json);
     Serial.println("Update firebase complete");
