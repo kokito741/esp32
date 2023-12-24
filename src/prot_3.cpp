@@ -41,23 +41,6 @@ float temperature=0.0;
 std::string formattedDate="0.0.0.0";
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP);
-String getCurrentDate() {
-    while(!timeClient.update()) {
-        timeClient.forceUpdate();
-    }
-    String weekDay = weekDays[timeClient.getDay()];
-    time_t epochTime = timeClient.getEpochTime();
-    struct tm *ptm = gmtime ((time_t *)&epochTime);
-    int monthDay = ptm->tm_mday;
-    int currentMonth = ptm->tm_mon+1;
-    String currentMonthName = months[currentMonth-1];
-    int currentYear = ptm->tm_year+1900;
-    String currentDate = String(monthDay) + "-" + String(currentMonth) + "-" + String(currentYear)+" - " + timeClient.getFormattedTime();
-    Serial.print("Current date: ");
-    Serial.println(currentDate);
-    return currentDate;
-}
-
 void FireBase_init(){
     Serial.printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
     config.api_key = API_KEY;
@@ -112,15 +95,37 @@ void setup() {
 
 }
 void loop() {
+    delay(10000);
+    Serial.println("Delay finished");
     digitalWrite(LED_BUILTIN, HIGH);
     float temperature= dht.readTemperature();
     float humidity=dht.readHumidity();
     Serial.println("Sensors recorded");
-    Serial.println("Delay started");
-    delay(4000);
-    Serial.println("Delay finished");
+    Serial.println("BEGIN DATE TAKEN");
+//CURENT DATA
+    timeClient.forceUpdate();
+    String weekDay = weekDays[timeClient.getDay()];
+    time_t epochTime = timeClient.getEpochTime();
+    struct tm *ptm = gmtime ((time_t *)&epochTime);
+    int monthDay = ptm->tm_mday;
+    int currentMonth = ptm->tm_mon+1;
+    String currentMonthName = months[currentMonth-1];
+    int currentYear = ptm->tm_year+1900;
+    String currentDate = String(monthDay) + "-" + String(currentMonth) + "-" + String(currentYear)+" - " + timeClient.getFormattedTime();
+    Serial.print("Current date: ");
+    Serial.println(currentDate);
+
+
+
+
+
+
+
     Serial.println("path build start");
-    currentdata_path = path+getCurrentDate()+"/"+DEVICE_ID;
+    currentdata_path = "cUgRiGk3v1Yfi59j0eOlNrK7gnn1/Living Room/"+currentDate+"/"+DEVICE_ID;
+    //currentdata_path = "cUgRiGk3v1Yfi59j0eOlNrK7gnn1/Living Room/24-12-2023 - 21:57:32/esp32-dev-1";
+    Serial.println(currentdata_path);
+
     temp_path=currentdata_path+"/temperature";
     hum_path=currentdata_path+"/humidity";
     Serial.println("path build finished");
@@ -129,10 +134,9 @@ void loop() {
     Humidity_json.set("Value",humidity);
     Serial.println("Json set finished");
     Serial.println("Updating firebase");
-
     Firebase.updateNode(fbdo, temp_path , Tempreature_json);
     Firebase.updateNode(fbdo, hum_path , Humidity_json);
     Serial.println("Update firebase complete");
+    Serial.println("Delay started");
     digitalWrite(LED_BUILTIN, LOW);
-
 }
