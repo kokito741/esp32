@@ -1,0 +1,3 @@
+per device evry 10 seconds 274 bytes 
+its should take 400 days to fill
+before adding gps
