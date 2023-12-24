@@ -32,7 +32,11 @@ String path="";//base path
 String temp_path="";
 String hum_path="";
 String tim_path="";
+//Week Days
+String weekDays[7]={"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
 
+//Month names
+String months[12]={"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
 // Sensor data
 float humidity=0.0;
 float temperature=0.0;
@@ -89,7 +93,7 @@ void Json_init()
 }
 
 void setup() {
-
+    pinMode(LED_BUILTIN, OUTPUT);
     Serial.begin(115200);
     WiFi.begin(SSID, PASSWORD);
     while (WiFi.status() != WL_CONNECTED) {
@@ -110,7 +114,7 @@ void setup() {
 
 
 }
-
+//GETS SENSOR DATA
 static bool measure_environment(float *temperature, float *humidity) {
     static unsigned long measurement_timestamp = millis();
     if (millis() - measurement_timestamp > 4000ul) {
@@ -121,28 +125,47 @@ static bool measure_environment(float *temperature, float *humidity) {
     }
     return (false);
 }
+//GETS YEAR,MOUTNT AND DAY
+String getCurrentDate() {
+    String weekDay = weekDays[timeClient.getDay()];
+    time_t epochTime = timeClient.getEpochTime();
+
+    //Get a time structure
+    struct tm *ptm = gmtime ((time_t *)&epochTime);
+
+    int monthDay = ptm->tm_mday;
+    int currentMonth = ptm->tm_mon+1;
+    String currentMonthName = months[currentMonth-1];
+    int currentYear = ptm->tm_year+1900;
+
+    //Print complete date:
+    String currentDate = String(monthDay) + "-" + String(currentMonth) + "-" + String(currentYear);
+    return currentDate;
+}
 
 void loop() {
+    digitalWrite(LED_BUILTIN, HIGH);
     float temperature;
     float humidity;
+    delay(4000);
     if (measure_environment(&temperature, &humidity)) {
         while(!timeClient.update()) {
             timeClient.forceUpdate();
         }
-        String formattedDate = timeClient.getFormattedTime();
-        String data =  formattedDate + "," + String(temperature, 1) + "," + String(humidity, 1);
-        Serial.println(data);
+        String currentDate = getCurrentDate()+" - " + timeClient.getFormattedTime();
+        Serial.print("Current date: ");
+        Serial.println(currentDate);
         Tempreature_json.set("Value",temperature);
         Humidity_json.set("Value",humidity);
-        DateTaken_json.set("Value",formattedDate);
+        DateTaken_json.set("Value",currentDate);
 
         Firebase.updateNode(fbdo, temp_path , Tempreature_json);
         Firebase.updateNode(fbdo, hum_path , Humidity_json);
         Firebase.updateNode(fbdo, tim_path , DateTaken_json);
+        Serial.println("Update firebase complete");
 
 
     }
-
-    delay(4000ul);
+    digitalWrite(LED_BUILTIN, LOW);
 
 }
