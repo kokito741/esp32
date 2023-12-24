@@ -1,13 +1,14 @@
+#include "Adafruit_Sensor.h"
 #include <Arduino.h>
-#include "DHT_Async.h"
+#include "DHT.h"
 #include <WiFi.h>
 #include <NTPClient.h>
 #include <WiFiUdp.h>
 #include <FirebaseESP32.h>
 #include <Firebase_ESP_Client.h>
-#define DHT_SENSOR_TYPE DHT_TYPE_22
+#define DHT_SENSOR_TYPE DHT22
 #define DHT_SENSOR_PIN 22
-DHT_Async dht_sensor(DHT_SENSOR_PIN, DHT_SENSOR_TYPE);
+DHT dht=DHT(DHT_SENSOR_PIN, DHT_SENSOR_TYPE);
 //Provide the token generation process info this will mostly help us debug the progress and the state of token generation
 #include "addons/TokenHelper.h"
 //Provide the RTDB payload printing info and other helper functions.
@@ -19,7 +20,7 @@ FirebaseData firebaseData;
 
 const char* SSID = "kokinetwork-2G";
 const char* PASSWORD = "0887588455";
-#define DEVICE_ID "dev-1"
+#define DEVICE_ID "esp32-dev-1"
 
 #define LOCATION "Living Room"
 FirebaseData fbdo;
@@ -29,35 +30,44 @@ FirebaseJson Tempreature_json;
 FirebaseJson Humidity_json;
 FirebaseJson DateTaken_json;
 String path="";//base path
+String currentdata_path="";
 String temp_path="";
 String hum_path="";
 String tim_path="";
-
-// Sensor data
+String weekDays[7]={"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
+String months[12]={"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
 float humidity=0.0;
 float temperature=0.0;
 std::string formattedDate="0.0.0.0";
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP);
+String getCurrentDate() {
+    while(!timeClient.update()) {
+        timeClient.forceUpdate();
+    }
+    String weekDay = weekDays[timeClient.getDay()];
+    time_t epochTime = timeClient.getEpochTime();
+    struct tm *ptm = gmtime ((time_t *)&epochTime);
+    int monthDay = ptm->tm_mday;
+    int currentMonth = ptm->tm_mon+1;
+    String currentMonthName = months[currentMonth-1];
+    int currentYear = ptm->tm_year+1900;
+    String currentDate = String(monthDay) + "-" + String(currentMonth) + "-" + String(currentYear)+" - " + timeClient.getFormattedTime();
+    Serial.print("Current date: ");
+    Serial.println(currentDate);
+    return currentDate;
+}
+
 void FireBase_init(){
     Serial.printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
-
-    /* Assign the API key (required) */
     config.api_key = API_KEY;
     auth.user.email = "esp32-dev@abv.bg";
     auth.user.password =  "987456321k";
-    /* Assign the RTDB URL */
     config.database_url = DATABASE_URL;
-
     Firebase.reconnectWiFi(true);
     fbdo.setResponseSize(4096);
-
     Serial.print("Signing in ... ");
-
-    /* Sign up */
-
-    /* Assign the callback function for the long running token generation task */
-    config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
+    config.token_status_callback = tokenStatusCallback;
     config.max_token_generation_retry = 5;
 
     Firebase.begin(&config, &auth);
@@ -65,32 +75,24 @@ void FireBase_init(){
     Serial.println( Firebase.ready());
     Serial.println( "WAITING FOR FIREBASE TOKEN GENERATION");
     while (!Firebase.ready()){ Serial.print("..");delay(300);    };
-
-
     path += auth.token.uid.c_str(); //<- user uid
     path+="/";
-
-    // determining the paths
-
     path+=LOCATION;
-    temp_path=path+"/temperature";
-    hum_path=path+"/humidity";
-    tim_path=path+"/timetaken";
+    path+="/";
+
 }
 void Json_init()
 {
-    Tempreature_json.add("Device ID",DEVICE_ID);
     Tempreature_json.add("Value",temperature);
 
-    Humidity_json.add("Device ID",DEVICE_ID);
     Humidity_json.add("Value",humidity);
-    DateTaken_json.add("Device ID",DEVICE_ID);
-    DateTaken_json.add("Value",formattedDate);
-}
 
+}
 void setup() {
+    pinMode(LED_BUILTIN, OUTPUT);
 
     Serial.begin(115200);
+    dht.begin();
     WiFi.begin(SSID, PASSWORD);
     while (WiFi.status() != WL_CONNECTED) {
         delay(1000);
@@ -100,49 +102,30 @@ void setup() {
     timeClient.setTimeOffset(7200);
     FireBase_init();
     Json_init();
-    Serial.println(path);
+    Serial.println(currentdata_path);
     Serial.println(temp_path);
     Serial.println(hum_path);
-    Serial.println(tim_path);
     Serial.println(String(millis()));
 
 
 
 
 }
-
-static bool measure_environment(float *temperature, float *humidity) {
-    static unsigned long measurement_timestamp = millis();
-    if (millis() - measurement_timestamp > 4000ul) {
-        if (dht_sensor.measure(temperature, humidity)) {
-            measurement_timestamp = millis();
-            return (true);
-        }
-    }
-    return (false);
-}
-
 void loop() {
-    float temperature;
-    float humidity;
-    if (measure_environment(&temperature, &humidity)) {
-        while(!timeClient.update()) {
-            timeClient.forceUpdate();
-        }
-        String formattedDate = timeClient.getFormattedTime();
-        String data =  formattedDate + "," + String(temperature, 1) + "," + String(humidity, 1);
-        Serial.println(data);
-        Tempreature_json.set("Value",temperature);
-        Humidity_json.set("Value",humidity);
-        DateTaken_json.set("Value",formattedDate);
+    digitalWrite(LED_BUILTIN, HIGH);
+    float temperature= dht.readTemperature();
+    float humidity=dht.readHumidity();
+    delay(4000);
 
-        Firebase.updateNode(fbdo, temp_path , Tempreature_json);
-        Firebase.updateNode(fbdo, hum_path , Humidity_json);
-        Firebase.updateNode(fbdo, tim_path , DateTaken_json);
+    currentdata_path = path+getCurrentDate()+"/"+DEVICE_ID;
+    temp_path=currentdata_path+"/temperature";
+    hum_path=currentdata_path+"/humidity";
 
-
-    }
-
-    delay(4000ul);
+    Tempreature_json.set("Value",temperature);
+    Humidity_json.set("Value",humidity);
+    Firebase.updateNode(fbdo, temp_path , Tempreature_json);
+    Firebase.updateNode(fbdo, hum_path , Humidity_json);
+    Serial.println("Update firebase complete");
+    digitalWrite(LED_BUILTIN, LOW);
 
 }
