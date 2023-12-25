@@ -116,11 +116,10 @@ void loop() {
     int currentMonth = ptm->tm_mon+1;
     String currentMonthName = months[currentMonth-1];
     int currentYear = ptm->tm_year+1900;
-    String currentDate = String(monthDay) + "-" + String(currentMonth) + "-" + String(currentYear)+" - " +  String(timeClient.getHours())+"-" + String(timeClient.getMinutes()-01);
+    String currentDate = String(monthDay) + "-" + String(currentMonth) + "-" + String(currentYear)+" - " +  String(timeClient.getHours())+"-" + (timeClient.getMinutes()-1 < 10 ? "0" : "") + String(timeClient.getMinutes()-1);
     Serial.print("Current date: ");
     Serial.println(currentDate);
     currentdata_path = path+currentDate+"/"+DEVICE_ID;
-    //currentdata_path = "cUgRiGk3v1Yfi59j0eOlNrK7gnn1/Living Room/24-12-2023 - 21:57:32/esp32-dev-1";
     Serial.println(currentdata_path);
     temp_path=currentdata_path+"/temperature";
     hum_path=currentdata_path+"/humidity";
