@@ -104,14 +104,10 @@ void setup() {
 
 }
 void loop() {
-    delay(10000);
     Serial.println("Delay finished");
     digitalWrite(LED_BUILTIN, HIGH);
     float temperature= dht.readTemperature();
     float humidity=dht.readHumidity();
-    Serial.println("Sensors recorded");
-    Serial.println("BEGIN DATE TAKEN");
-//CURENT DATA
     timeClient.forceUpdate();
     String weekDay = weekDays[timeClient.getDay()];
     time_t epochTime = timeClient.getEpochTime();
@@ -120,32 +116,17 @@ void loop() {
     int currentMonth = ptm->tm_mon+1;
     String currentMonthName = months[currentMonth-1];
     int currentYear = ptm->tm_year+1900;
-    String currentDate = String(monthDay) + "-" + String(currentMonth) + "-" + String(currentYear)+" - " + timeClient.getFormattedTime();
+    String currentDate = String(monthDay) + "-" + String(currentMonth) + "-" + String(currentYear)+" - " +  String(timeClient.getHours())+"-" + String(timeClient.getMinutes()-01);
     Serial.print("Current date: ");
     Serial.println(currentDate);
-
-
-
-
-
-
-
-    Serial.println("path build start");
     currentdata_path = path+currentDate+"/"+DEVICE_ID;
     //currentdata_path = "cUgRiGk3v1Yfi59j0eOlNrK7gnn1/Living Room/24-12-2023 - 21:57:32/esp32-dev-1";
     Serial.println(currentdata_path);
-
     temp_path=currentdata_path+"/temperature";
     hum_path=currentdata_path+"/humidity";
-    Serial.println("path build finished");
-    Serial.println("data send start");
-     // Send readings to database:
     sendFloat(temp_path, temperature);
     sendFloat(hum_path, humidity);
-    Serial.println("data send finished");
-    Serial.println("Updating firebase");
 
-    Serial.println("Update firebase complete");
-    Serial.println("Delay started");
     digitalWrite(LED_BUILTIN, LOW);
+    delay(40000);
 }
