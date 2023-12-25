@@ -16,6 +16,7 @@ DHT dht=DHT(DHT_SENSOR_PIN, DHT_SENSOR_TYPE);
 #define API_KEY "AIzaSyBU7Tn2EOD03z5eOseQ2rbKoBzbS3waS9w"
 #define DATABASE_URL "https://esp32-dd238-default-rtdb.europe-west1.firebasedatabase.app/"
 FirebaseData firebaseData;
+#include "addons/RTDBHelper.h"
 
 
 const char* SSID = "kokinetwork-2G";
@@ -64,13 +65,22 @@ void FireBase_init(){
     path+="/";
 
 }
-void Json_init()
-{
-    Tempreature_json.add("Value",temperature);
-
-    Humidity_json.add("Value",humidity);
-
+void sendFloat(String path, float value){
+    if (Firebase.setFloat(fbdo, path.c_str(), value)){
+        Serial.print("Writing value: ");
+        Serial.print (value);
+        Serial.print(" on the following path: ");
+        Serial.println(path);
+        Serial.println("PASSED");
+        Serial.println("PATH: " + fbdo.dataPath());
+        Serial.println("TYPE: " + fbdo.dataType());
+    }
+    else {
+        Serial.println("FAILED");
+        Serial.println("REASON: " + fbdo.errorReason());
+    }
 }
+
 void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
 
@@ -84,7 +94,6 @@ void setup() {
     timeClient.begin();
     timeClient.setTimeOffset(7200);
     FireBase_init();
-    Json_init();
     Serial.println(currentdata_path);
     Serial.println(temp_path);
     Serial.println(hum_path);
@@ -129,13 +138,13 @@ void loop() {
     temp_path=currentdata_path+"/temperature";
     hum_path=currentdata_path+"/humidity";
     Serial.println("path build finished");
-    Serial.println("Json set start");
-    Tempreature_json.set("Value",temperature);
-    Humidity_json.set("Value",humidity);
-    Serial.println("Json set finished");
+    Serial.println("data send start");
+     // Send readings to database:
+    sendFloat(temp_path, temperature);
+    sendFloat(hum_path, humidity);
+    Serial.println("data send finished");
     Serial.println("Updating firebase");
-    Firebase.updateNode(fbdo, temp_path , Tempreature_json);
-    Firebase.updateNode(fbdo, hum_path , Humidity_json);
+
     Serial.println("Update firebase complete");
     Serial.println("Delay started");
     digitalWrite(LED_BUILTIN, LOW);
