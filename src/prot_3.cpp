@@ -123,7 +123,7 @@ void loop() {
     int currentMonth = ptm->tm_mon+1;
     String currentMonthName = months[currentMonth-1];
     int currentYear = ptm->tm_year+1900;
-    String currentDate = String(monthDay) + "-" + String(currentMonth) + "-" + String(currentYear)+" - " +  String(timeClient.getHours())+"-" + (timeClient.getMinutes() < 10 ? "0" : "") + String(timeClient.getMinutes());
+    String currentDate = String(monthDay) + "-" + String(currentMonth) + "-" + String(currentYear)+" - " +  (timeClient.getHours() < 10 ? "0" : "") + String(timeClient.getHours())+"-" + (timeClient.getMinutes() < 10 ? "0" : "") + String(timeClient.getMinutes());
     Serial.print("Current date: ");
     Serial.println(currentDate);
     currentdata_path = path+currentDate+"/"+DEVICE_ID;
