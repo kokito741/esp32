@@ -106,6 +106,13 @@ void setup() {
 void loop() {
     Serial.println("Delay finished");
     digitalWrite(LED_BUILTIN, HIGH);
+    if (!Firebase.ready()) {
+        Firebase.begin(&config, &auth);
+        while (!Firebase.ready()) {
+            delay(1000);
+            Serial.println("Waiting for Firebase to initialize...");
+        }
+    }
     float temperature= dht.readTemperature();
     float humidity=dht.readHumidity();
     timeClient.forceUpdate();
@@ -116,7 +123,7 @@ void loop() {
     int currentMonth = ptm->tm_mon+1;
     String currentMonthName = months[currentMonth-1];
     int currentYear = ptm->tm_year+1900;
-    String currentDate = String(monthDay) + "-" + String(currentMonth) + "-" + String(currentYear)+" - " +  String(timeClient.getHours())+"-" + (timeClient.getMinutes()-1 < 10 ? "0" : "") + String(timeClient.getMinutes()-1);
+    String currentDate = String(monthDay) + "-" + String(currentMonth) + "-" + String(currentYear)+" - " +  String(timeClient.getHours())+"-" + (timeClient.getMinutes() < 10 ? "0" : "") + String(timeClient.getMinutes());
     Serial.print("Current date: ");
     Serial.println(currentDate);
     currentdata_path = path+currentDate+"/"+DEVICE_ID;
