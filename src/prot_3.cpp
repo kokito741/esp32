@@ -7,7 +7,7 @@
 #include <FirebaseESP32.h>
 #include <Firebase_ESP_Client.h>
 #define DHT_SENSOR_TYPE DHT22
-#define DHT_SENSOR_PIN 22
+#define DHT_SENSOR_PIN 4
 DHT dht=DHT(DHT_SENSOR_PIN, DHT_SENSOR_TYPE);
 //Provide the token generation process info this will mostly help us debug the progress and the state of token generation
 #include "addons/TokenHelper.h"
