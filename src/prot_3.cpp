@@ -126,7 +126,7 @@ void loop() {
     String currentDate = String(monthDay) + "-" + String(currentMonth) + "-" + String(currentYear)+" - " +  (timeClient.getHours() < 10 ? "0" : "") + String(timeClient.getHours())+"-" + (timeClient.getMinutes() < 10 ? "0" : "") + String(timeClient.getMinutes());
     Serial.print("Current date: ");
     Serial.println(currentDate);
-    currentdata_path = path+currentDate+"/"+DEVICE_ID;
+    currentdata_path = path+currentDate;
     Serial.println(currentdata_path);
     temp_path=currentdata_path+"/temperature";
     hum_path=currentdata_path+"/humidity";
