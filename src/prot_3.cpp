@@ -5,9 +5,10 @@
 #include <NTPClient.h>
 #include <WiFiUdp.h>
 #include <FirebaseESP32.h>
-#include <Firebase_ESP_Client.h>
+
 #define DHT_SENSOR_TYPE DHT22
 #define DHT_SENSOR_PIN 4
+// The serial connection to the GPS device
 DHT dht=DHT(DHT_SENSOR_PIN, DHT_SENSOR_TYPE);
 //Provide the token generation process info this will mostly help us debug the progress and the state of token generation
 #include "addons/TokenHelper.h"
@@ -17,8 +18,6 @@ DHT dht=DHT(DHT_SENSOR_PIN, DHT_SENSOR_TYPE);
 #define DATABASE_URL "https://esp32-dd238-default-rtdb.europe-west1.firebasedatabase.app/"
 FirebaseData firebaseData;
 #include "addons/RTDBHelper.h"
-
-
 const char* SSID = "kokinetwork-2G";
 const char* PASSWORD = "0887588455";
 #define DEVICE_ID "esp32-dev-1"
@@ -80,6 +79,7 @@ void sendFloat(String path, float value){
         Serial.println("REASON: " + fbdo.errorReason());
     }
 }
+
 
 void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
